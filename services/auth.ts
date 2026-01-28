@@ -55,18 +55,20 @@ export const registerUser = async (name: string, email: string, password?: strin
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const uid = userCredential.user.uid;
 
+  // Atualiza o perfil do Firebase Auth (opcional, mas bom para consistência)
   await updateProfile(userCredential.user, { displayName: name });
 
-  // Cria documento no Firestore
-  const newUser = {
-    email: email,
+  // Cria documento no Firestore seguindo exatamente a estrutura solicitada
+  const newUserDoc = {
     nome: name,
+    email: email,
     plano: "gratuito",
     data_registo: serverTimestamp(),
     ultima_atividade: serverTimestamp()
   };
 
-  await setDoc(doc(db, "usuarios", uid), newUser);
+  // Usa o UID como ID do documento na coleção "usuarios"
+  await setDoc(doc(db, "usuarios", uid), newUserDoc);
 
   return {
     id: uid,

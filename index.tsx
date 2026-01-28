@@ -43,6 +43,8 @@ const App = () => {
           const profile = await getUserProfile(firebaseUser.uid);
           if (profile) {
             setUser(profile);
+          } else {
+            console.warn("Utilizador autenticado mas perfil Firestore em falta.");
           }
         } catch (e) {
           console.error("Erro ao carregar perfil do Firestore", e);
@@ -87,19 +89,13 @@ const App = () => {
   }, [speedThreshold, alertDistance, units, voiceVolume, autoReadAlerts]);
 
   const handleLogin = async (email: string, pass: string) => {
-    try {
-      await loginUser(email, pass);
-    } catch (e: any) {
-      alert("Erro no Login: " + e.message);
-    }
+    // We let the Login component handle the catch to show inline errors
+    await loginUser(email.trim(), pass);
   };
 
   const handleRegister = async (name: string, email: string, pass: string) => {
-    try {
-      await registerUser(name, email, pass);
-    } catch (e: any) {
-      alert("Erro no Registo: " + e.message);
-    }
+    // We let the Register component handle the catch to show inline errors
+    await registerUser(name, email.trim(), pass);
   };
 
   const handleLogout = async () => {
@@ -110,18 +106,26 @@ const App = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-white text-blue-600">
+      <div className="h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 text-blue-600">
         <Loader2 className="animate-spin mb-4" size={48} />
-        <p className="font-bold text-gray-500 uppercase tracking-widest text-xs font-mono">Autenticando...</p>
+        <p className="font-black text-slate-500 uppercase tracking-[0.3em] text-[10px]">Autenticando Vigilante...</p>
       </div>
     );
   }
 
   if (!user) {
     return showRegister ? (
-      <Register onToggle={() => setShowRegister(false)} onRegister={(u: any) => handleRegister(u.name, u.email, u.password)} lang={lang} />
+      <Register 
+        onToggle={() => setShowRegister(false)} 
+        onRegister={handleRegister} 
+        lang={lang} 
+      />
     ) : (
-      <Login onToggle={() => setShowRegister(true)} onLogin={(u: any) => handleLogin(u.email, u.password)} lang={lang} />
+      <Login 
+        onToggle={() => setShowRegister(true)} 
+        onLogin={handleLogin} 
+        lang={lang} 
+      />
     );
   }
 
@@ -158,17 +162,17 @@ const App = () => {
   };
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <header className="flex-none p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700 flex justify-between items-center z-[2000] shadow-sm">
+    <div className={`h-screen flex flex-col overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <header className="flex-none p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b dark:border-slate-800 flex justify-between items-center z-[2000] shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
             <ShieldAlert size={20} className="text-white" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">{t('app_name')}</h1>
+          <h1 className="text-xl font-black tracking-tighter">{t('app_name')}</h1>
         </div>
         {user.isPremium && (
-          <div className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white text-[10px] font-black px-2 py-1 rounded-lg border border-green-300 shadow-sm uppercase tracking-tighter">
-            LOCAL AI ACTIVE
+          <div className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-sm uppercase tracking-widest">
+            AI ACTIVE
           </div>
         )}
       </header>
@@ -184,22 +188,22 @@ const App = () => {
         />
       </main>
 
-      <nav className="flex-none bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-2 flex justify-around items-center z-[2000] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
-        <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'map' ? 'text-blue-600' : 'text-gray-400'}`}>
-          <MapIcon size={24} className={activeTab === 'map' ? 'scale-110' : ''} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">{t('map')}</span>
+      <nav className="flex-none bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t dark:border-slate-800 p-2 flex justify-around items-center z-[2000] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
+        <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'map' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <MapIcon size={22} className={activeTab === 'map' ? 'scale-110' : ''} />
+          <span className="text-[9px] font-black uppercase tracking-widest">{t('map')}</span>
         </button>
-        <button onClick={() => setActiveTab('legal')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'legal' ? 'text-blue-600' : 'text-gray-400'}`}>
-          <MessageSquare size={24} className={activeTab === 'legal' ? 'scale-110' : ''} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">{t('legal')}</span>
+        <button onClick={() => setActiveTab('legal')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'legal' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <MessageSquare size={22} className={activeTab === 'legal' ? 'scale-110' : ''} />
+          <span className="text-[9px] font-black uppercase tracking-widest">{t('legal')}</span>
         </button>
-        <button onClick={() => setActiveTab('plans')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'plans' ? 'text-blue-600' : 'text-gray-400'}`}>
-          <CreditCard size={24} className={activeTab === 'plans' ? 'scale-110' : ''} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">{t('plans')}</span>
+        <button onClick={() => setActiveTab('plans')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'plans' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <CreditCard size={22} className={activeTab === 'plans' ? 'scale-110' : ''} />
+          <span className="text-[9px] font-black uppercase tracking-widest">{t('plans')}</span>
         </button>
-        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-400'}`}>
-          <SettingsIcon size={24} className={activeTab === 'settings' ? 'scale-110' : ''} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">{t('settings')}</span>
+        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <SettingsIcon size={22} className={activeTab === 'settings' ? 'scale-110' : ''} />
+          <span className="text-[9px] font-black uppercase tracking-widest">{t('settings')}</span>
         </button>
       </nav>
     </div>

@@ -1,47 +1,52 @@
 
-import * as webllm from "@mlc-ai/web-llm";
+import { GoogleGenAI } from "@google/genai";
 
-let engine: webllm.MLCEngine | null = null;
-const modelId = "Phi-3-mini-4k-instruct-q4f16_1-MLC";
+// Gemini models are used instead of local LLMs for production reliability and reasoning quality.
+// The SDK @google/genai is used following the official developer guidelines.
 
 export const initAI = async (onProgress?: (progress: number) => void) => {
-  if (engine) return engine;
-
-  if (!("gpu" in navigator)) {
-    throw new Error("O seu navegador não suporta WebGPU. Use um navegador moderno (Chrome/Edge).");
+  // Gemini API is cloud-based and doesn't require local model loading.
+  // We simulate immediate completion to maintain UI compatibility with LegalAI and VoiceCopilot components.
+  if (onProgress) {
+    onProgress(100);
   }
-
-  engine = await webllm.CreateMLCEngine(modelId, {
-    initProgressCallback: (report) => {
-      if (onProgress) onProgress(Math.floor(report.progress * 100));
-      console.log("AI Init:", report.text);
-    },
-  });
-
-  return engine;
+  return true;
 };
 
 export const getLegalAdvice = async (query: string, lang: string, onProgress?: (p: number) => void) => {
-  const ai = await initAI(onProgress);
+  // Simulate immediate initialization progress for UI feedback.
+  if (onProgress) onProgress(100);
   
-  const systemPrompt = `És o "Vigilante Pro", um assistente jurídico local e privado especializado no Código da Estrada. 
-  Língua: ${lang}. Responde de forma técnica mas breve.`;
+  // Always initialize with the pre-configured API_KEY from environment variables.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Use gemini-3-pro-preview for complex reasoning tasks like legal consultation.
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: query,
+    config: {
+      systemInstruction: `És o "Vigilante Pro", um assistente jurídico especializado no Código da Estrada (Portugal, Espanha, Reino Unido). 
+      Língua de resposta: ${lang}. 
+      Regras: Sê técnico mas acessível. Cita artigos se possível. 
+      Contexto: O utilizador pode estar a contestar uma multa ou a pedir esclarecimentos sobre condução.`,
+    },
+  });
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: query },
-  ];
-
-  const reply = await ai.chat.completions.create({ messages });
-  return reply.choices[0].message.content || "Sem resposta.";
+  // Returns extracted text property from GenerateContentResponse.
+  return response.text || "Não foi possível obter resposta legal no momento.";
 };
 
 export const processVoiceCopilot = async (command: string, context: any) => {
-  const ai = await initAI();
-  const prompt = `Condutor: "${command}". Local: ${context.location}. Clima: ${context.weather.condition}. 
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Use gemini-3-flash-preview for high-speed, low-latency conversational responses.
+  const prompt = `Condutor: "${command}". Local: ${context.location}. Clima: ${context.weather?.condition || 'Desconhecido'}. 
   Responde como um copiloto rápido (máx 12 palavras).`;
 
-  const messages = [{ role: "user", content: prompt }];
-  const reply = await ai.chat.completions.create({ messages });
-  return reply.choices[0].message.content || "Entendido.";
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: prompt,
+  });
+
+  return response.text || "Entendido.";
 };

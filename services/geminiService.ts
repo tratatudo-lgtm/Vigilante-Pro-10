@@ -1,21 +1,15 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const getApiKey = () => {
-  try {
-    return process.env.API_KEY || '';
-  } catch (e) {
-    return '';
-  }
-};
+// This service is configured to use the official @google/genai SDK following developer standards.
 
 export const getLegalAdvice = async (query: string, lang: string) => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  // Create a new GoogleGenAI instance using the required apiKey parameter from environment variables.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
-    contents: [{ role: 'user', parts: [{ text: query }] }],
+    contents: query,
     config: {
       systemInstruction: `És o "Vigilante Legal", um assistente jurídico especializado no Código da Estrada (Portugal, Espanha, Reino Unido). 
       Língua de resposta: ${lang}. 
@@ -25,12 +19,12 @@ export const getLegalAdvice = async (query: string, lang: string) => {
     },
   });
 
+  // Correctly access the .text property instead of calling a text() method.
   return response.text || "Não foi possível obter resposta legal no momento.";
 };
 
 export const processVoiceCopilot = async (command: string, context: { location: any, weather: any, alerts: any }) => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const prompt = `Comando de voz do condutor: "${command}".
   Contexto atual:
@@ -43,7 +37,7 @@ export const processVoiceCopilot = async (command: string, context: { location: 
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: prompt,
   });
 
   return response.text || "Copiloto indisponível.";

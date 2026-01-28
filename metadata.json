@@ -1,0 +1,8 @@
+{
+  "name": "Vigilante Pro",
+  "description": "Seu assistente inteligente de trânsito 100% local e privado. Monitorização de radares e apoio jurídico via WebLLM.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
